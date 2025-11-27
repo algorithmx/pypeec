@@ -60,3 +60,7 @@ temp/
 # exclude the IDE folders
 .vscode/
 .idea/
+
+*.png
+
+.DS_Store
