@@ -16,8 +16,8 @@ data_voxelize:
         coord_shell: &id001
         - [-8.5e-06, -1.5e-05]
         - [8.950000000000001e-05, -1.5e-05]
-        - [8.950000000000001e-05, 3.6e-05]
-        - [-8.5e-06, 3.6e-05]
+        - [8.950000000000001e-05, 5.0499999999999994e-05]
+        - [-8.5e-06, 5.0499999999999994e-05]
         coord_holes: []
     substrate:
     - shape_layer: [layer_sub]
@@ -86,6 +86,18 @@ data_voxelize:
         - [4.5e-05, -3.0000000000000005e-06]
         - [0.0, -3.0000000000000005e-06]
         coord_holes: []
+    sink_stub:
+    - shape_layer: [layer_top]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell:
+        - [4.1e-05, 4.15e-05]
+        - [4.5e-05, 4.15e-05]
+        - [4.5e-05, 4.2499999999999996e-05]
+        - [4.1e-05, 4.2499999999999996e-05]
+        coord_holes: []
     src_bottom:
     - shape_layer: [layer_top]
       shape_operation: add
@@ -123,20 +135,20 @@ data_conflict:
   resolve_random: false
   conflict_rules:
   - domain_resolve: [trace]
-    domain_keep: [src, sink]
+    domain_keep: [src, sink, sink_stub]
   - domain_resolve: [trace_bottom]
     domain_keep: [src_bottom, sink_bottom]
   - domain_resolve: [ground]
     domain_keep: [substrate]
   - domain_resolve: [substrate]
-    domain_keep: [trace, trace_bottom, src, sink, src_bottom, sink_bottom]
+    domain_keep: [trace, trace_bottom, src, sink, sink_stub, src_bottom, sink_bottom]
 data_integrity:
   check_integrity: true
   domain_connected:
     signal_top:
       domain_group:
       - [trace]
-      - [src, sink]
+      - [src, sink, sink_stub]
       connected: true
     signal_bottom:
       domain_group:

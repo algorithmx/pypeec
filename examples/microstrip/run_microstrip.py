@@ -304,6 +304,10 @@ def run_microstrip():
     # Sink: x=81um, y=0
     gen.add_rect(x=81.0e-6, y=0.0, w=term_w, h=width_trace, domain="sink")
     
+    # Sink Stub: x=43um, y=42um (tip of the vertical stub)
+    # Vertical stub starts at y=14, h=28 -> ends at y=42
+    gen.add_rect(x=43.0e-6, y=42.0e-6, w=width_trace, h=term_w, domain="sink_stub")
+
     # Src Bottom: x=0, y=-5um
     gen.add_rect(x=0.0, y=-5.0e-6, w=term_w, h=width_trace, domain="src_bottom")
     
@@ -312,14 +316,14 @@ def run_microstrip():
     
     # --- Configure Rules ---
     gen.conflict_rules = [
-        {"domain_resolve": ["trace"], "domain_keep": ["src", "sink"]},
+        {"domain_resolve": ["trace"], "domain_keep": ["src", "sink", "sink_stub"]},
         {"domain_resolve": ["trace_bottom"], "domain_keep": ["src_bottom", "sink_bottom"]},
         {"domain_resolve": ["ground"], "domain_keep": ["substrate"]},
-        {"domain_resolve": ["substrate"], "domain_keep": ["trace", "trace_bottom", "src", "sink", "src_bottom", "sink_bottom"]}
+        {"domain_resolve": ["substrate"], "domain_keep": ["trace", "trace_bottom", "src", "sink", "sink_stub", "src_bottom", "sink_bottom"]}
     ]
     
     gen.domain_connected = {
-        "signal_top": {"domain_group": [["trace"], ["src", "sink"]], "connected": True},
+        "signal_top": {"domain_group": [["trace"], ["src", "sink", "sink_stub"]], "connected": True},
         "signal_bottom": {"domain_group": [["trace_bottom"], ["src_bottom", "sink_bottom"]], "connected": True},
         "ground": {"domain_group": [["ground"]], "connected": True}
     }
@@ -413,9 +417,9 @@ def run_microstrip():
         data_tolerance = yaml.safe_load(f)
     
     # Override factorization settings to use PARDISO exclusively
-    data_tolerance["factorization_options"]["library"] = "PARDISO"
-    data_tolerance["factorization_options"]["pardiso_options"]["thread_pardiso"] = -1  # Auto-detect cores
-    data_tolerance["factorization_options"]["pardiso_options"]["thread_mkl"] = -1      # Auto-detect cores
+    # data_tolerance["factorization_options"]["library"] = "PARDISO"
+    # data_tolerance["factorization_options"]["pardiso_options"]["thread_pardiso"] = -1  # Auto-detect cores
+    # data_tolerance["factorization_options"]["pardiso_options"]["thread_mkl"] = -1      # Auto-detect cores
     
     print("\nSolver Configuration:")
     print(f"  Matrix Factorization: {data_tolerance['factorization_options']['library']}")

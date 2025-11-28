@@ -1,0 +1,122 @@
+# Definition of the material properties and sources for the 5-port microstrip
+#
+# System Overview:
+# - Top T-shape: Ports P1, P2, P3
+# - Bottom Bar: Ports P4, P5
+# - Reference: Ground Plane
+#
+
+"material_def":
+    "copper_top":
+        "domain_list": ["trace", "src", "sink", "sink_stub"]
+        "material_type": "electric"
+        "orientation_type": "isotropic"
+        "var_type": "lumped"
+    "copper_bottom":
+        "domain_list": ["trace_bottom", "src_bottom", "sink_bottom"]
+        "material_type": "electric"
+        "orientation_type": "isotropic"
+        "var_type": "lumped"
+    "copper_ground":
+        "domain_list": ["ground"]
+        "material_type": "electric"
+        "orientation_type": "isotropic"
+        "var_type": "lumped"
+    "substrate_material":
+        "domain_list": ["substrate"]
+        "material_type": "electric"
+        "orientation_type": "isotropic"
+        "var_type": "lumped"
+
+"source_def":
+    # --- Top T-Shape Ports ---
+    "port_p1":
+        "domain_list": ["src"]
+        "source_type": "current"
+        "var_type": "lumped"
+    "port_p2":
+        "domain_list": ["sink"]
+        "source_type": "current"
+        "var_type": "lumped"
+    "port_p3":
+        "domain_list": ["sink_stub"]
+        "source_type": "current"
+        "var_type": "lumped"
+
+    # --- Bottom Bar Ports ---
+    "port_p4":
+        "domain_list": ["src_bottom"]
+        "source_type": "current"
+        "var_type": "lumped"
+    "port_p5":
+        "domain_list": ["sink_bottom"]
+        "source_type": "current"
+        "var_type": "lumped"
+
+    # --- Ground Reference ---
+    "ground_ref":
+        "domain_list": ["ground"]
+        "source_type": "voltage"
+        "var_type": "lumped"
+
+# Default values for materials and sources
+"material_val": &material_val
+    "copper_top": {"rho_re": 1.72e-8, "rho_im": 0.0}
+    "copper_bottom": {"rho_re": 1.72e-8, "rho_im": 0.0}
+    "copper_ground": {"rho_re": 1.72e-8, "rho_im": 0.0}
+    # FR4 Substrate at 1 GHz: eps_r=4.4
+    # rho_im = -1 / (w * eps0 * (eps_r - 1))
+    "substrate_material": {"rho_re": 0.0, "rho_im": -5.288}
+
+"source_val": &source_val_default
+    # By default, all ports are open (I=0) and Ground is 0V
+    "port_p1": {"I_re": 0.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "port_p2": {"I_re": 0.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "port_p3": {"I_re": 0.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "port_p4": {"I_re": 0.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "port_p5": {"I_re": 0.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "ground_ref": {"V_re": 0.0, "V_im": 0.0, "Z_re": 1.0e-6, "Z_im": 0.0}
+
+# Simulation Sweeps
+# We define 5 sweeps. In each sweep, one port is driven with 1A, others are 0A.
+"sweep_solver":
+    "sim_p1":
+        "init": null
+        "param":
+            "freq": 1.0e+9 # 1 GHz example frequency
+            "material_val": *material_val
+            "source_val":
+                <<: *source_val_default
+                "port_p1": {"I_re": 1.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "sim_p2":
+        "init": "sim_p1" # Reuse preconditioner from previous step
+        "param":
+            "freq": 1.0e+9
+            "material_val": *material_val
+            "source_val":
+                <<: *source_val_default
+                "port_p2": {"I_re": 1.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "sim_p3":
+        "init": "sim_p1"
+        "param":
+            "freq": 1.0e+9
+            "material_val": *material_val
+            "source_val":
+                <<: *source_val_default
+                "port_p3": {"I_re": 1.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "sim_p4":
+        "init": "sim_p1"
+        "param":
+            "freq": 1.0e+9
+            "material_val": *material_val
+            "source_val":
+                <<: *source_val_default
+                "port_p4": {"I_re": 1.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
+    "sim_p5":
+        "init": "sim_p1"
+        "param":
+            "freq": 1.0e+9
+            "material_val": *material_val
+            "source_val":
+                <<: *source_val_default
+                "port_p5": {"I_re": 1.0, "I_im": 0.0, "Y_re": 0.0, "Y_im": 0.0}
