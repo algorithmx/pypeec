@@ -17,8 +17,8 @@ from pypeec.utils import matrix
 
 # Path setup
 PATH_ROOT = os.path.dirname(__file__)
-FOLDER_EXAMPLE = "microstrip"
-FOLDER_CONFIG = "config"
+FOLDER_EXAMPLE = "."
+FOLDER_CONFIG = "../config"
 
 def run_matrix_extraction():
     # ---------------------------------------------------------
