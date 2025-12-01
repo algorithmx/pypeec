@@ -5,6 +5,12 @@ This example demonstrates how to programmatically define frequency-dependent mat
 """
 
 import os
+
+# Set MKL thread limits BEFORE importing numpy/scipy to avoid hanging
+os.environ["MKL_NUM_THREADS"] = "4"
+os.environ["OMP_NUM_THREADS"] = "4"
+os.environ["NUMEXPR_NUM_THREADS"] = "4"
+
 import numpy as np
 import scipy.constants as cst
 import yaml
@@ -361,6 +367,9 @@ def run_microstrip():
     file_viewer = os.path.join(PATH_ROOT, FOLDER_CONFIG, "viewer.yaml")
     viz_path = os.path.join(PATH_ROOT, "microstrip_viz")
     
+    # Set QT_QPA_PLATFORM to offscreen to avoid XCB errors in headless environments
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    
     # visualize_voxel expects the data dict, which we now have loaded
     visualize_voxel(data_voxel, file_viewer, viz_path)
     
@@ -411,20 +420,31 @@ def run_microstrip():
     # Maps the logical domains to material types and sources
     data_problem = create_problem_definition(sweep_solver)
 
-    # 5. Load Tolerance Configuration and Configure for PARDISO
+    # 5. Load Tolerance Configuration (PARDISO is configured as default)
     file_tolerance = os.path.join(PATH_ROOT, FOLDER_CONFIG, "tolerance.yaml")
     with open(file_tolerance, 'r') as f:
         data_tolerance = yaml.safe_load(f)
     
-    # Override factorization settings to use PARDISO exclusively
-    # data_tolerance["factorization_options"]["library"] = "PARDISO"
-    # data_tolerance["factorization_options"]["pardiso_options"]["thread_pardiso"] = -1  # Auto-detect cores
-    # data_tolerance["factorization_options"]["pardiso_options"]["thread_mkl"] = -1      # Auto-detect cores
+    # Optional: Override factorization settings if needed
+    # data_tolerance["factorization_options"]["library"] = "SuperLU"  # Switch back to SuperLU
+    # data_tolerance["factorization_options"]["pardiso_options"]["thread_pardiso"] = 4  # Limit PARDISO threads
+    # data_tolerance["factorization_options"]["pardiso_options"]["thread_mkl"] = 4      # Limit MKL threads
+
+    # Enable GPU acceleration if CuPy is available
+    try:
+        import cupy
+        print("CuPy found! Enabling GPU acceleration (FFT).")
+        data_tolerance["dense_options"]["fft_options"]["library"] = "CuPy"
+    except ImportError:
+        print("CuPy not found. Using default CPU FFT.")
     
     print("\nSolver Configuration:")
     print(f"  Matrix Factorization: {data_tolerance['factorization_options']['library']}")
-    print(f"  PARDISO Threads: {data_tolerance['factorization_options']['pardiso_options']['thread_pardiso']} (auto-detect)")
-    print(f"  MKL Threads: {data_tolerance['factorization_options']['pardiso_options']['thread_mkl']} (auto-detect)\n")
+    if data_tolerance['factorization_options']['library'] == 'PARDISO':
+        print(f"  PARDISO Threads: {data_tolerance['factorization_options']['pardiso_options']['thread_pardiso']} (auto-detect)")
+        print(f"  MKL Threads: {data_tolerance['factorization_options']['pardiso_options']['thread_mkl']} (auto-detect)\n")
+    else:
+        print()
 
     # 6. Run Solver
     print("Running Solver...")
@@ -437,6 +457,9 @@ def run_microstrip():
     file_plotter = os.path.join(PATH_ROOT, FOLDER_CONFIG, "plotter.yaml")
     # Re-use the same visualization directory
     viz_path = os.path.join(PATH_ROOT, "microstrip_viz")
+    
+    # Set QT_QPA_PLATFORM to offscreen to avoid XCB errors in headless environments
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
     
     visualize_solution(
         solution,
