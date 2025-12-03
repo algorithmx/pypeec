@@ -1,0 +1,58 @@
+material_def:
+  conductor:
+    domain_list: [trace, ground, src, sink]
+    material_type: electric
+    orientation_type: isotropic
+    var_type: lumped
+  dielectric:
+    domain_list: [substrate]
+    material_type: electric
+    orientation_type: isotropic
+    var_type: lumped
+source_def:
+  src:
+    domain_list: [src]
+    source_type: voltage
+    var_type: lumped
+  sink:
+    domain_list: [sink]
+    source_type: voltage
+    var_type: lumped
+  ground_src:
+    domain_list: [ground]
+    source_type: voltage
+    var_type: lumped
+sweep_solver:
+  sim_1MHz:
+    init: null
+    param:
+      freq: 1000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -5286.795168335763}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_100MHz:
+    init: sim_1MHz
+    param:
+      freq: 100000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -52.86795168335764}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_1000MHz:
+    init: sim_100MHz
+    param:
+      freq: 1000000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -5.286795168335763}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}

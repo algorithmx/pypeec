@@ -430,13 +430,18 @@ def run_microstrip():
     # data_tolerance["factorization_options"]["pardiso_options"]["thread_pardiso"] = 4  # Limit PARDISO threads
     # data_tolerance["factorization_options"]["pardiso_options"]["thread_mkl"] = 4      # Limit MKL threads
 
-    # Enable GPU acceleration if CuPy is available
+    # Enable GPU acceleration if CuPy is available and working
     try:
         import cupy
-        print("CuPy found! Enabling GPU acceleration (FFT).")
+        # Perform a functional check to ensure the GPU is supported
+        cupy.zeros((1,)).get()
+        # Perform a kernel check to ensure NVRTC is working
+        cupy.ones((1,))
+        
+        print("CuPy found and functional! Enabling GPU acceleration (FFT).")
         data_tolerance["dense_options"]["fft_options"]["library"] = "CuPy"
-    except ImportError:
-        print("CuPy not found. Using default CPU FFT.")
+    except Exception as e:
+        print(f"CuPy found but not functional ({e}). Using default CPU FFT.")
     
     print("\nSolver Configuration:")
     print(f"  Matrix Factorization: {data_tolerance['factorization_options']['library']}")
