@@ -154,7 +154,11 @@ def run_straight_line():
     visualize_voxel(data_voxel, file_viewer, viz_path, name="geometry_straight")
     
     # 3. Define Physics
-    freq_list = [1e6, 1e8, 1e9]
+    freq_list = [
+        0.01e9, 0.05e9,
+        0.1e9, 0.2e9, 0.3e9, 0.4e9, 0.5e9, 0.6e9, 0.7e9, 0.8e9, 0.9e9,
+        1.0e9, 2.0e9, 5.0e9
+    ]
     eps_r = 4.4
     sigma_cu = 5.8e7
     

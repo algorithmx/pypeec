@@ -23,19 +23,30 @@ source_def:
     source_type: voltage
     var_type: lumped
 sweep_solver:
-  sim_1MHz:
+  sim_10MHz:
     init: null
     param:
-      freq: 1000000.0
+      freq: 10000000.0
       material_val:
         conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
-        dielectric: {rho_re: 0.0, rho_im: -5286.795168335763}
+        dielectric: {rho_re: 0.0, rho_im: -528.6795168335764}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_50MHz:
+    init: sim_10MHz
+    param:
+      freq: 50000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -105.73590336671528}
       source_val:
         src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
         sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
         ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
   sim_100MHz:
-    init: sim_1MHz
+    init: sim_50MHz
     param:
       freq: 100000000.0
       material_val:
@@ -45,13 +56,123 @@ sweep_solver:
         src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
         sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
         ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
-  sim_1000MHz:
+  sim_200MHz:
     init: sim_100MHz
+    param:
+      freq: 200000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -26.43397584167882}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_300MHz:
+    init: sim_200MHz
+    param:
+      freq: 300000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -17.62265056111921}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_400MHz:
+    init: sim_300MHz
+    param:
+      freq: 400000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -13.21698792083941}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_500MHz:
+    init: sim_400MHz
+    param:
+      freq: 500000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -10.573590336671526}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_600MHz:
+    init: sim_500MHz
+    param:
+      freq: 600000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -8.811325280559606}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_700MHz:
+    init: sim_600MHz
+    param:
+      freq: 700000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -7.552564526193947}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_800MHz:
+    init: sim_700MHz
+    param:
+      freq: 800000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -6.608493960419705}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_900MHz:
+    init: sim_800MHz
+    param:
+      freq: 900000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -5.874216853706403}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_1000MHz:
+    init: sim_900MHz
     param:
       freq: 1000000000.0
       material_val:
         conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
         dielectric: {rho_re: 0.0, rho_im: -5.286795168335763}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_2000MHz:
+    init: sim_1000MHz
+    param:
+      freq: 2000000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -2.6433975841678814}
+      source_val:
+        src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
+        ground_src: {V_re: 0.0, V_im: 0.0, Z_re: 1.0e-06, Z_im: 0.0}
+  sim_5000MHz:
+    init: sim_2000MHz
+    param:
+      freq: 5000000000.0
+      material_val:
+        conductor: {rho_re: 1.724137931034483e-08, rho_im: 0.0}
+        dielectric: {rho_re: 0.0, rho_im: -1.0573590336671528}
       source_val:
         src: {V_re: 1.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
         sink: {V_re: 0.0, V_im: 0.0, Z_re: 50.0, Z_im: 0.0}
