@@ -216,7 +216,7 @@ def _get_extract_sweep(source_values, terminal_list):
 
         # extract the terminal quantities
         V_vec[idx] = source_values[src]["V"] - source_values[sink]["V"]
-        I_vec[idx] = (source_values[src]["I"] - source_values[sink]["I"]) / 2
+        I_vec[idx] = 0.5 * (source_values[src]["I"] - source_values[sink]["I"])
 
     # assign the data
     V_vec = np.array(V_vec, dtype=np.complex128)

@@ -266,6 +266,11 @@
             "tolerance_magnetic":
                 "type": "number"
                 "minimum": 0
+            "library":
+                "type": "string"
+                "enum":
+                    - "SuperLU"
+                    - "PARDISO"
             "norm_options":
                 "type": "object"
                 "required":

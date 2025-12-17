@@ -408,6 +408,7 @@ def _run_solver_sweep(data_solver, data_internal, data_param, sol_init):
         (condition_ok, condition_status) = equation_solver.get_condition(
             cond_mat_cm,
             condition_options,
+            factorization_options,
         )
 
         # free memory

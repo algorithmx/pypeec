@@ -6,9 +6,13 @@ __author__ = "Thomas Guillod"
 __copyright__ = "Thomas Guillod - Dartmouth College"
 __license__ = "Mozilla Public License Version 2.0"
 
-import scilogger
+import os
+import warnings
+
 import numpy as np
+import scipy.sparse as sps
 import scipy.sparse.linalg as sla
+import scilogger
 
 # get a logger
 LOGGER = scilogger.get_logger(__name__, "pypeec")
@@ -35,7 +39,81 @@ def _get_inverse_operator(mat, decomposition):
     return op
 
 
-def get_condition_matrix(mat, norm_options):
+def _get_lu_decomposition(mat, library, pardiso_options):
+    """Get an LU decomposition object for the provided matrix.
+
+    Depending on ``library``, either SciPy SuperLU or PARDISO (via Pydiso)
+    is used. The returned object must expose a ``solve(rhs, trans=...)``
+    method compatible with ``scipy.sparse.linalg.splu``.
+    """
+
+    # Default: always-available SciPy SuperLU
+    if library == "SuperLU" or library is None:
+        LOGGER.debug("LU decomposition backend = SuperLU")
+        # prevent problematic matrices to trigger warnings
+        warnings.filterwarnings("error", module="scipy.sparse.linalg")
+        return sla.splu(mat)
+
+    if library == "PARDISO":
+        LOGGER.debug("LU decomposition backend = PARDISO")
+
+        try:
+            import pydiso.mkl_solver as lib
+        except ImportError as exc:
+            raise RuntimeError("PARDISO requested for condition check, but pydiso.mkl_solver is not available") from exc
+
+        # get options (reuse factorization PARDISO options when provided)
+        if pardiso_options is None:
+            pardiso_options = {"thread_pardiso": None, "thread_mkl": None}
+
+        thread_pardiso = pardiso_options.get("thread_pardiso")
+        thread_mkl = pardiso_options.get("thread_mkl")
+
+        # find the number of threads (same convention as matrix_factorization)
+        if isinstance(thread_pardiso, int) and thread_pardiso < 0:
+            thread_pardiso = os.cpu_count() + thread_pardiso + 1
+        if isinstance(thread_mkl, int) and thread_mkl < 0:
+            thread_mkl = os.cpu_count() + thread_mkl + 1
+        if thread_pardiso == 0:
+            thread_pardiso = 1
+        if thread_mkl == 0:
+            thread_mkl = 1
+
+        # set number of threads
+        if thread_pardiso is not None:
+            lib.set_mkl_pardiso_threads(thread_pardiso)
+        if thread_mkl is not None:
+            lib.set_mkl_threads(thread_mkl)
+
+        # ensure proper sparse format
+        mat_csr = mat.tocsr() if not sps.isspmatrix_csr(mat) else mat
+        mat_csr_H = mat_csr.conjugate().transpose().tocsr()
+
+        # build separate factorizations for A and A^H
+        try:
+            fact_N = lib.MKLPardisoSolver(mat_csr, factor=True, verbose=False)
+            fact_H = lib.MKLPardisoSolver(mat_csr_H, factor=True, verbose=False)
+        except Warning:
+            raise RuntimeError("invalid factorization: PARDISO (condition check)") from None
+
+        class _PardisoDecomposition:
+            def solve(self, rhs, trans="N"):
+                # Ensure RHS has the same dtype as the matrix to avoid
+                # PardisoTypeConversionWarning and extra casting.
+                rhs_arr = np.asarray(rhs, dtype=mat_csr.dtype)
+
+                if trans == "N":
+                    return fact_N.solve(rhs_arr)
+                if trans in ("H", "C"):
+                    return fact_H.solve(rhs_arr)
+                raise ValueError("invalid transpose flag for PARDISO decomposition")
+
+        return _PardisoDecomposition()
+
+    raise ValueError("invalid LU backend for condition check: %s" % library)
+
+
+def get_condition_matrix(mat, norm_options, library="SuperLU", pardiso_options=None):
     """
     Compute an estimate of the condition number (norm 1) of a sparse matrix.
     """
@@ -58,7 +136,7 @@ def get_condition_matrix(mat, norm_options):
 
     # get LU decomposition
     LOGGER.debug("compute LU decomposition")
-    decomposition = sla.splu(mat)
+    decomposition = _get_lu_decomposition(mat, library, pardiso_options)
 
     # get the inverse operator
     op = _get_inverse_operator(mat, decomposition)

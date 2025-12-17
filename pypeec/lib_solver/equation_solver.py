@@ -602,7 +602,7 @@ def get_factorization(pcd_mat_cm, factorization_options):
     return fct_cm, C_mat_cm
 
 
-def get_condition(cond_mat_cm, conditions_options):
+def get_condition(cond_mat_cm, conditions_options, factorization_options):
     """
     Compute an estimate of the condition number (norm 1) of the sparse system.
     The condition number is used to detect problematic (quasi-singular) systems.
@@ -614,6 +614,14 @@ def get_condition(cond_mat_cm, conditions_options):
     tolerance_magnetic = conditions_options["tolerance_magnetic"]
     norm_options = conditions_options["norm_options"]
 
+    # optional: backend for LU in condition estimation
+    library = conditions_options.get("library", "SuperLU")
+
+    # reuse PARDISO threading options from the main factorization settings
+    pardiso_options = None
+    if library == "PARDISO":
+        pardiso_options = factorization_options.get("pardiso_options", None)
+
     # extract matrices
     (cond_mat_c, cond_mat_m) = cond_mat_cm
 
@@ -621,11 +629,21 @@ def get_condition(cond_mat_cm, conditions_options):
     if check:
         LOGGER.debug("condition / electric")
         with LOGGER.BlockIndent():
-            cond_electric = matrix_condition.get_condition_matrix(cond_mat_c, norm_options)
+            cond_electric = matrix_condition.get_condition_matrix(
+                cond_mat_c,
+                norm_options,
+                library=library,
+                pardiso_options=pardiso_options,
+            )
 
         LOGGER.debug("condition / magnetic")
         with LOGGER.BlockIndent():
-            cond_magnetic = matrix_condition.get_condition_matrix(cond_mat_m, norm_options)
+            cond_magnetic = matrix_condition.get_condition_matrix(
+                cond_mat_m,
+                norm_options,
+                library=library,
+                pardiso_options=pardiso_options,
+            )
 
         status = (cond_electric < tolerance_electric) and (cond_magnetic < tolerance_magnetic)
     else:
