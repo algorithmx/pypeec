@@ -69,7 +69,7 @@ parallel_sweep:
     #   - "PARDISO" is typically faster than SuperLU (available through Pydiso)
     #   - "PyAMG" is typically slow but uses less memory (risk of convergence issues)
     #   - "Identity" is using an identity preconditioner (debug mode)
-    "library": "PARDISO"
+    "library": "SuperLU"
 
     # options for PyAMG
     #   - options for the algebraic multigrid sparse solver
@@ -156,7 +156,7 @@ parallel_sweep:
     # condition number estimation
     #   - "SuperLU" (SciPy, always available)
     #   - "PARDISO" (via Pydiso, optional but faster)
-    "library": "PARDISO"
+    "library": "SuperLU"
 
     # maximum allowable condition number for the electric and magnetic matrices
     #   - the condition numbers are computed with the sparse preconditioner

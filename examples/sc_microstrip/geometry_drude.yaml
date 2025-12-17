@@ -1,10 +1,10 @@
 mesh_type: shape
 data_voxelize:
-  param: {dx: 1.25e-07, dy: 1.25e-07, dz: 1.25e-07, cz: 0.0, simplify: 1.0e-08, construct: null,
+  param: {dx: 2.5e-07, dy: 2.5e-07, dz: 2.5e-07, cz: 0.0, simplify: 1.0e-08, construct: null,
     xy_min: null, xy_max: null}
   layer_stack:
-  - {n_layer: 8, tag_layer: layer_gnd}
-  - {n_layer: 8, tag_layer: layer_sub}
+  - {n_layer: 4, tag_layer: layer_gnd}
+  - {n_layer: 4, tag_layer: layer_sub}
   - {n_layer: 2, tag_layer: layer_top}
   geometry_shape:
     ground:
@@ -14,10 +14,10 @@ data_voxelize:
       shape_data:
         buffer: 0.0
         coord_shell: &id001
-        - [-2.1e-06, -3.6e-06]
-        - [5.21e-05, -3.6e-06]
-        - [5.21e-05, 3.6e-06]
-        - [-2.1e-06, 3.6e-06]
+        - [-1.2999999999999998e-06, -2.8e-06]
+        - [5.13e-05, -2.8e-06]
+        - [5.13e-05, 2.8e-06]
+        - [-1.2999999999999998e-06, 2.8e-06]
         coord_holes: []
     substrate:
     - shape_layer: [layer_sub]
