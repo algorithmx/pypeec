@@ -1,0 +1,121 @@
+mesh_type: shape
+data_voxelize:
+  param: {dx: 1.25e-07, dy: 1.25e-07, dz: 1.25e-07, cz: 0.0, simplify: 1.0e-08, construct: null,
+    xy_min: null, xy_max: null}
+  layer_stack:
+  - {n_layer: 8, tag_layer: layer_gnd}
+  - {n_layer: 8, tag_layer: layer_sub}
+  - {n_layer: 2, tag_layer: layer_top}
+  geometry_shape:
+    ground:
+    - shape_layer: [layer_gnd]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell: &id001
+        - [-2.1e-06, -3.6e-06]
+        - [5.21e-05, -3.6e-06]
+        - [5.21e-05, 3.6e-06]
+        - [-2.1e-06, 3.6e-06]
+        coord_holes: []
+    substrate:
+    - shape_layer: [layer_sub]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell: *id001
+        coord_holes: []
+    trace:
+    - shape_layer: [layer_top]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell:
+        - [0.0, -2.0e-06]
+        - [5.0e-05, -2.0e-06]
+        - [5.0e-05, 2.0e-06]
+        - [0.0, 2.0e-06]
+        coord_holes: []
+    src:
+    - shape_layer: [layer_top]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell:
+        - [-5.0e-07, -2.0e-06]
+        - [5.0e-07, -2.0e-06]
+        - [5.0e-07, 2.0e-06]
+        - [-5.0e-07, 2.0e-06]
+        coord_holes: []
+    sink:
+    - shape_layer: [layer_top]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell:
+        - [4.9500000000000004e-05, -2.0e-06]
+        - [5.05e-05, -2.0e-06]
+        - [5.05e-05, 2.0e-06]
+        - [4.9500000000000004e-05, 2.0e-06]
+        coord_holes: []
+    src_gnd:
+    - shape_layer: [layer_gnd]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell:
+        - [-5.0e-07, -2.0e-06]
+        - [5.0e-07, -2.0e-06]
+        - [5.0e-07, 2.0e-06]
+        - [-5.0e-07, 2.0e-06]
+        coord_holes: []
+    sink_gnd:
+    - shape_layer: [layer_gnd]
+      shape_operation: add
+      shape_type: polygon
+      shape_data:
+        buffer: 0.0
+        coord_shell:
+        - [4.9500000000000004e-05, -2.0e-06]
+        - [5.05e-05, -2.0e-06]
+        - [5.05e-05, 2.0e-06]
+        - [4.9500000000000004e-05, 2.0e-06]
+        coord_holes: []
+data_point:
+  check_cloud: false
+  filter_cloud: false
+  pts_cloud: []
+data_resampling:
+  use_reduce: false
+  use_resample: false
+  resampling_factor: [1, 1, 1]
+data_conflict:
+  resolve_rules: true
+  resolve_random: false
+  conflict_rules:
+  - domain_resolve: [trace]
+    domain_keep: [src, sink]
+  - domain_resolve: [ground]
+    domain_keep: [src_gnd, sink_gnd, substrate]
+  - domain_resolve: [substrate]
+    domain_keep: [trace, src, sink]
+data_integrity:
+  check_integrity: true
+  domain_connected:
+    signal:
+      domain_group:
+      - [trace]
+      - [src, sink]
+      connected: true
+    ground:
+      domain_group:
+      - [ground]
+      - [src_gnd, sink_gnd]
+      connected: true
+  domain_adjacent: {}

@@ -83,8 +83,8 @@ parallel_sweep:
     #   - options for the PARDISO sparse solver
     #   - only used if this solver is selected
     "pardiso_options":
-        "thread_pardiso": 4            # threads for PARDISO (0 for disabling, -1 for number of cores, None for default)
-        "thread_mkl": 4                # threads for MKL (0 for disabling, -1 for number of cores, None for default)
+        "thread_pardiso": -1            # threads for PARDISO (0 for disabling, -1 for number of cores, None for default)
+        "thread_mkl": 1                # threads for MKL (0 for disabling, -1 for number of cores, None for default)
 
 # equation system solver options (for GMRES and GCROT solver)
 "solver_options":
@@ -151,6 +151,12 @@ parallel_sweep:
     #   - if true, the condition numbers are computed and checked
     #   - if false, the condition numbers are ignored
     "check": true
+
+    # sparse solver used for the LU decomposition in the
+    # condition number estimation
+    #   - "SuperLU" (SciPy, always available)
+    #   - "PARDISO" (via Pydiso, optional but faster)
+    "library": "PARDISO"
 
     # maximum allowable condition number for the electric and magnetic matrices
     #   - the condition numbers are computed with the sparse preconditioner
