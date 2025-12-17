@@ -4,33 +4,38 @@ Includes temperature dependence and normal fluid losses.
 """
 
 import os
+import scilogger
 import yaml
+import logging
 import numpy as np
 import numpy.linalg as lna
 import scipy.constants as cst
 import pypeec
 import scisave
+# Set default logging level to WARNING before importing pypeec
+LOGGER = scilogger.get_logger(__name__, "pypeec")
+LOGGER.setLevel("WARNING")
 
 # --- Simulation Parameters ---
-FREQ_LIST = [100e6, 500e6, 1e9, 5e9, 10e9] # 100 MHz to 10 GHz
+FREQ_LIST = [500e6, 1e9] # 100 MHz to 10 GHz
 
 # --- Geometry Parameters ---
 # Note: For kinetic inductance to be significant relative to geometric inductance,
 # the film should be thin (comparable to lambda_L) or the path very narrow.
 # Here we use a thinner trace than the standard example.
-THICKNESS_TRACE = 0.25e-6  # 250 nm (Typical for SC films)
-WIDTH_TRACE = 4.0e-6      # 4 um
-MARG = 0.4
-RESOLUTION = 32.0
-LENGTH_TRACE = 50.0e-6    # 50 um
-HEIGHT_SUBSTRATE = 1.0e-6  # 4 um
+THICKNESS_TRACE = 0.5e-6
+WIDTH_TRACE = 4.0e-6
+MARG = 0.2
+RESOLUTION = 16.0
+LENGTH_TRACE = 50.0e-6
+HEIGHT_SUBSTRATE = 1.0e-6
 
 # --- Material Parameters (Niobium Example) ---
 TC = 9.2                 # Critical Temperature (K)
 T_OP = 4.2               # Operating Temperature (K)
-LAMBDA_L0 = 4e-8         # Zero-temp London Penetration Depth (40 nm)
-#LAMBDA_L0 = 1e-9         # Fake London Penetration Depth (1 nm)
-SIGMA_N0 = 4.0e12        # Normal state conductivity at Tc (S/m) - approx
+#LAMBDA_L0 = 4e-8         # Zero-temp London Penetration Depth (40 nm)
+LAMBDA_L0 = 1e-9         # Fake London Penetration Depth (1 nm)
+SIGMA_N0 = 4.0e7        # Normal state conductivity at Tc (S/m) - approx
 SIGMA_GND = 1e20         # Ground plane conductivity (PEC)
 
 # --- Imports ---
@@ -185,13 +190,12 @@ def run_simulation():
     # 3. Define Frequency Sweep
     eps_r = 4.4
     sweep_solver = {}
-    sweep_pairs = []
+    sweep_list = []
     prev_tag = None
     
     for i, freq in enumerate(FREQ_LIST):
         tag_src = f"sim_{int(freq/1e6)}MHz"
-        tag_sink = f"{tag_src}_sink"
-        sweep_pairs.append((tag_src, tag_sink))
+        sweep_list.append(tag_src)
         
         omega = 2 * np.pi * freq
         
@@ -206,46 +210,29 @@ def run_simulation():
         
         # Dielectric
         rho_re_diel, rho_im_diel = compute_dielectric_resistivity(freq, eps_r)
-            
+        
         material_val = {
             "conductor_sc":  {"rho_re": rho_sc.real, "rho_im": rho_sc.imag},
             "conductor_gnd": {"rho_re": rho_re_gnd, "rho_im": 0.0},
             "dielectric":    {"rho_re": rho_re_diel, "rho_im": rho_im_diel},
         }
 
-        source_drive_src = {
-            "src": {"V_re": 1.0, "V_im": 0.0, "Z_re": 50.0, "Z_im": 0.0},
-            "src_gnd": {"V_re": 0.0, "V_im": 0.0, "Z_re": 0.0, "Z_im": 0.0},
-            "sink": {"V_re": 0.0, "V_im": 0.0, "Z_re": 50.0, "Z_im": 0.0},
-            "sink_gnd": {"V_re": 0.0, "V_im": 0.0, "Z_re": 0.0, "Z_im": 0.0},
-        }
-
-        source_drive_sink = {
-            "src": {"V_re": 0.0, "V_im": 0.0, "Z_re": 50.0, "Z_im": 0.0},
-            "src_gnd": {"V_re": 0.0, "V_im": 0.0, "Z_re": 0.0, "Z_im": 0.0},
-            "sink": {"V_re": 1.0, "V_im": 0.0, "Z_re": 50.0, "Z_im": 0.0},
-            "sink_gnd": {"V_re": 0.0, "V_im": 0.0, "Z_re": 0.0, "Z_im": 0.0},
-        }
-
+        all_zero = {"V_re": 0.0, "V_im": 0.0, "Z_re": 0.0, "Z_im": 0.0}
+        Z0 = {"V_re": 0.0, "V_im": 0.0, "Z_re": 50.0, "Z_im": 0.0}
+        V_excitation = {"V_re": 1.0, "V_im": 0.0, "Z_re": 50.0, "Z_im": 0.0}
         sweep_solver[tag_src] = {
             "init": prev_tag,
             "param": {
                 "freq": freq,
                 "material_val": material_val,
-                "source_val": source_drive_src,
+                "source_val": {
+                    "src": V_excitation, "sink": Z0,
+                    "src_gnd": all_zero, "sink_gnd": all_zero,
+                },
             },
         }
 
-        sweep_solver[tag_sink] = {
-            "init": tag_src,
-            "param": {
-                "freq": freq,
-                "material_val": material_val,
-                "source_val": source_drive_sink,
-            },
-        }
-
-        prev_tag = tag_sink
+        prev_tag = tag_src
     
     # 4. Run Solver
     data_problem = create_sc_problem(sweep_solver)
@@ -257,10 +244,12 @@ def run_simulation():
     solution = pypeec.run_solver_data(data_voxel, data_problem, data_tolerance)
     
     # 5. Extract Results
-    print("\n--- Extraction Results ---")
+    print(f"\n--- Extraction Results ---")
     print(f"Temperature: {T_OP} K / {TC} K")
-    print(f"{'Freq (MHz)':>15} | {'R_in (Ohm)':>15} | {'L_total (nH)':>15}")
-    print("-" * 55)
+    h_L = "L' (uH/m)"
+    h_C = "C' (pF/m)"
+    print(f"{'Freq (MHz)':>10} | {'R_in (Ohm)':>12} | {'X_in (Ohm)':>12} | {'Z0_std (Ohm)':>12} | {'Z0_nrg (Ohm)':>12} | {h_L:>12} | {h_C:>12}")
+    print("-" * 100)
     
     terminal_list = [
         {"src": "src", "sink": "src_gnd"},
@@ -270,38 +259,36 @@ def run_simulation():
     # Use only sweeps with valid solver/condition status
     data_sweep_all = solution["data_sweep"]
 
-    for tag_src, tag_sink in sweep_pairs:
+    for tag_src in sweep_list:
         sweep_src = data_sweep_all.get(tag_src)
-        sweep_sink = data_sweep_all.get(tag_sink)
 
-        invalid_pair = False
-        for tag, sweep_info in ((tag_src, sweep_src), (tag_sink, sweep_sink)):
-            if sweep_info is None:
-                print(f"Skipping {tag}: no sweep data found in solution.")
-                invalid_pair = True
-                continue
+        if sweep_src is None:
+            print(f"Skipping {tag_src}: no sweep data found in solution.")
+            continue
 
-            if not (sweep_info.get("solution_ok", False)
-                    and sweep_info.get("solver_ok", False)
-                    and sweep_info.get("condition_ok", False)):
-                print(
-                    f"Skipping {tag}: solution_ok={sweep_info.get('solution_ok')} "
-                    f"solver_ok={sweep_info.get('solver_ok')} "
-                    f"condition_ok={sweep_info.get('condition_ok')}"
-                )
-                invalid_pair = True
-
-        if invalid_pair:
+        if not (sweep_src.get("solution_ok", False)
+                and sweep_src.get("solver_ok", False)
+                and sweep_src.get("condition_ok", False)):
+            print(
+                f"Skipping {tag_src}: solution_ok={sweep_src.get('solution_ok')} "
+                f"solver_ok={sweep_src.get('solver_ok')} "
+                f"condition_ok={sweep_src.get('condition_ok')}"
+            )
             continue
 
         solution_single = {
             "status": True,
             "data_init": solution["data_init"],
-            "data_sweep": {tag_src: sweep_src, tag_sink: sweep_sink},
+            "data_sweep": {tag_src: sweep_src},
         }
 
-        sweep_order = [tag_src, tag_sink]
+        sweep_order = [tag_src]
         terminal_data = matrix.get_extract(solution_single, sweep_order, terminal_list)
+        
+        # Apply symmetry to generate the second port excitation data
+        # [0, 1] -> Original data (Port 1 driven)
+        # [1, 0] -> Swapped data (Port 2 driven, assuming symmetry)
+        terminal_data = matrix.get_symmetry(terminal_data, [[0, 1], [1, 0]])
 
         # Extract single-port data (Port 1 against its local ground) using the source-driven sweep
         V1 = terminal_data["V_mat"][0, 0]
@@ -311,29 +298,34 @@ def run_simulation():
         freq = sweep_src.get("param", {}).get("freq", terminal_data["freq"])
         omega = 2 * np.pi * freq
         
-        if omega > 0:
-            L_total = Z_in.imag / omega
-        else:
-            L_total = 0.0
-            
-        print(f"{freq/1e6:15.1f} | {Z_in.real:15.4f} | {L_total*1e9:15.4f}")
-
         # Energy-based extraction for short superconducting lines
-        integral_total = sweep_info.get("integral_total", {})
+        integral_total = sweep_src.get("integral_total", {})
+        S_total = integral_total.get("S_total", 0.0)
         W_e = integral_total.get("W_electric", 0.0)
-        W_m = integral_total.get("W_magnetic", 0.0)
-        energy_L_eq = 2.0 * W_m / (abs(I1) ** 2) if abs(I1) > 0 else np.nan
-        energy_C_eq = 2.0 * W_e / (abs(V1) ** 2) if abs(V1) > 0 else np.nan
+        
+        if omega > 0:
+            Q_reactive = S_total.imag
+            W_m_inferred = W_e + Q_reactive / (2 * omega)
+        else:
+            W_m_inferred = 0.0
+        
+        I_ref = abs(I1)
+        V_ref = abs(V1)
 
-        if not np.isnan(energy_L_eq) and not np.isnan(energy_C_eq):
+        energy_L_eq = 2.0 * W_m_inferred / (I_ref ** 2) if I_ref > 0 else np.nan
+        energy_C_eq = 2.0 * W_e / (V_ref ** 2) if V_ref > 0 else np.nan
+
+        Z0_energy_val = np.nan
+        L_per_m = np.nan
+        C_per_m = np.nan
+
+        if not np.isnan(energy_L_eq) and not np.isnan(energy_C_eq) and energy_L_eq > 0 and energy_C_eq > 0:
             L_per_m = energy_L_eq / LENGTH_TRACE
             C_per_m = energy_C_eq / LENGTH_TRACE
-            Z0_energy = np.sqrt(L_per_m / C_per_m) if C_per_m > 0 else np.nan
-            print(
-                f"              (energy) Z0≈{Z0_energy:8.4f} Ω, L'={L_per_m*1e6:8.4f} µH/m"
-            )
+            Z0_energy_val = np.sqrt(L_per_m / C_per_m)
 
         # Two-port standard extraction (Z-matrix -> S-parameters -> Z0)
+        Z0_std_val = np.nan
         if terminal_data["n_solution"] >= len(terminal_list):
             Z_mat = matrix.get_matrix(terminal_data)["Z_mat"]
             Zref = 50.0
@@ -344,9 +336,18 @@ def run_simulation():
             num = (1 + S_mat[0, 0]) ** 2 - S_mat[0, 1] ** 2
             den = (1 - S_mat[0, 0]) ** 2 - S_mat[0, 1] ** 2
             Z0_standard = Zref * np.sqrt(num / den)
-            print(f"              (std)    Z0≈{Z0_standard.real:8.4f} Ω")
-        else:
-            print("              (std)    skipped (needs >=2 excitations)")
+            Z0_std_val = Z0_standard.real
+
+        # Print Row
+        str_freq = f"{freq/1e6:10.1f}"
+        str_rin = f"{Z_in.real:12.4f}"
+        str_xin = f"{Z_in.imag:12.4f}"
+        str_z0_std = f"{Z0_std_val:12.4f}" if not np.isnan(Z0_std_val) else f"{'NaN':>12}"
+        str_z0_nrg = f"{Z0_energy_val:12.4f}" if not np.isnan(Z0_energy_val) else f"{'NaN':>12}"
+        str_l_per_m = f"{L_per_m*1e6:12.4f}" if not np.isnan(L_per_m) else f"{'NaN':>12}"
+        str_c_per_m = f"{C_per_m*1e12:12.4f}" if not np.isnan(C_per_m) else f"{'NaN':>12}"
+        
+        print(f"{str_freq} | {str_rin} | {str_xin} | {str_z0_std} | {str_z0_nrg} | {str_l_per_m} | {str_c_per_m}")
 
     # --- Optional Visualization (voxel + solution) ---
     def visualize_voxel(data_voxel, viewer_config_path, output_path, name="geometry"):
