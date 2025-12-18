@@ -246,10 +246,9 @@ def run_simulation():
     # 5. Extract Results
     print(f"\n--- Extraction Results ---")
     print(f"Temperature: {T_OP} K / {TC} K")
-    h_L = "L' (uH/m)"
-    h_C = "C' (pF/m)"
-    print(f"{'Freq (MHz)':>10} | {'R_in (Ohm)':>12} | {'X_in (Ohm)':>12} | {'Z0_std (Ohm)':>12} | {'Z0_nrg (Ohm)':>12} | {h_L:>12} | {h_C:>12}")
-    print("-" * 100)
+    print(f"{'Freq (MHz)':>10} | {'Z0_std':>10} | {'L\'_nrg':>10} | {'C\'_nrg':>10} | {'L\'_T':>10} | {'C\'_T':>10}")
+    print(f"{'':>10} | {'(Ohm)':>10} | {'(uH/m)':>10} | {'(pF/m)':>10} | {'(uH/m)':>10} | {'(pF/m)':>10}")
+    print("-" * 85)
     
     terminal_list = [
         {"src": "src", "sink": "src_gnd"},
@@ -326,6 +325,9 @@ def run_simulation():
 
         # Two-port standard extraction (Z-matrix -> S-parameters -> Z0)
         Z0_std_val = np.nan
+        L_per_m_T = np.nan
+        C_per_m_T = np.nan
+
         if terminal_data["n_solution"] >= len(terminal_list):
             Z_mat = matrix.get_matrix(terminal_data)["Z_mat"]
             Zref = 50.0
@@ -338,16 +340,32 @@ def run_simulation():
             Z0_standard = Zref * np.sqrt(num / den)
             Z0_std_val = Z0_standard.real
 
+            # T-Network Extraction (Lumped Model)
+            if omega > 0:
+                Z11_im = Z_mat[0, 0].imag
+                Z12_im = Z_mat[0, 1].imag
+                
+                # C_total = -1 / (omega * Im(Z12))
+                if abs(Z12_im) > 1e-12:
+                    C_total = -1.0 / (omega * Z12_im)
+                    C_per_m_T = C_total / LENGTH_TRACE
+                
+                # L_arm = (Im(Z11) - Im(Z12)) / omega
+                L_arm = (Z11_im - Z12_im) / omega
+                # Total Inductance = 2 * L_arm (series)
+                L_per_m_T = (2 * L_arm) / LENGTH_TRACE
+
         # Print Row
         str_freq = f"{freq/1e6:10.1f}"
-        str_rin = f"{Z_in.real:12.4f}"
-        str_xin = f"{Z_in.imag:12.4f}"
-        str_z0_std = f"{Z0_std_val:12.4f}" if not np.isnan(Z0_std_val) else f"{'NaN':>12}"
-        str_z0_nrg = f"{Z0_energy_val:12.4f}" if not np.isnan(Z0_energy_val) else f"{'NaN':>12}"
-        str_l_per_m = f"{L_per_m*1e6:12.4f}" if not np.isnan(L_per_m) else f"{'NaN':>12}"
-        str_c_per_m = f"{C_per_m*1e12:12.4f}" if not np.isnan(C_per_m) else f"{'NaN':>12}"
+        str_z0_std = f"{Z0_std_val:10.4f}" if not np.isnan(Z0_std_val) else f"{'NaN':>10}"
         
-        print(f"{str_freq} | {str_rin} | {str_xin} | {str_z0_std} | {str_z0_nrg} | {str_l_per_m} | {str_c_per_m}")
+        str_l_nrg = f"{L_per_m*1e6:10.4f}" if not np.isnan(L_per_m) else f"{'NaN':>10}"
+        str_c_nrg = f"{C_per_m*1e12:10.4f}" if not np.isnan(C_per_m) else f"{'NaN':>10}"
+        
+        str_l_t = f"{L_per_m_T*1e6:10.4f}" if not np.isnan(L_per_m_T) else f"{'NaN':>10}"
+        str_c_t = f"{C_per_m_T*1e12:10.4f}" if not np.isnan(C_per_m_T) else f"{'NaN':>10}"
+        
+        print(f"{str_freq} | {str_z0_std} | {str_l_nrg} | {str_c_nrg} | {str_l_t} | {str_c_t}")
 
     # --- Optional Visualization (voxel + solution) ---
     def visualize_voxel(data_voxel, viewer_config_path, output_path, name="geometry"):

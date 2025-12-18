@@ -88,6 +88,36 @@ $$ Z_{0,\text{std}} = Z_0 \sqrt{\frac{(1 + S_{11})^2 - S_{21}^2}{(1 - S_{11})^2 
 
 which matches the textbook Nicolson–Ross–Weir extraction in the lossless limit. This provides a “standard VNA” view that can be compared directly to measurement or EM solvers geared toward S-parameters.
 
+### 4. T-Network Extraction (Lumped Model)
+
+For electrically short lines (length $\ll \lambda$), such as the superconducting traces often modeled here, a lumped T-network model provides a direct way to extract effective inductance and capacitance from the Z-matrix.
+
+**Model Configuration:**
+```
+Port 1 ----[L]----+----[L]---- Port 2
+                  |
+                 [C]
+                  |
+                 GND
+```
+Where the horizontal arms are inductors of equal inductance $L$ and the vertical branch is a capacitor $C$.
+
+**Derivation:**
+For a symmetric T-network, the Z-matrix elements are related to $L$ and $C$ by:
+$$ Z_{11} = Z_{22} = j\omega L + \frac{1}{j\omega C} $$
+$$ Z_{12} = Z_{21} = \frac{1}{j\omega C} $$
+
+**Extraction Formulas:**
+From the measured Z-matrix at angular frequency $\omega$:
+
+$$ C = -\frac{1}{\omega \cdot \text{Im}(Z_{12})} $$
+$$ L = \frac{\text{Im}(Z_{11}) - \text{Im}(Z_{12})}{\omega} $$
+
+**Note on Load Impedance:**
+The extraction formulas above do *not* require manual subtraction of the 50 $\Omega$ load impedance. The function `matrix.get_matrix` mathematically de-embeds the Z-parameters of the structure from the external circuit. The resulting $Z_{11}$ and $Z_{12}$ values represent the intrinsic properties of the superconducting line itself, independent of the termination used during the simulation.
+
+This method is particularly useful for verifying the kinetic inductance contribution in short superconducting structures where the distributed transmission line model might be overkill or harder to fit.
+
 ### Choosing the Right Metric
 
 - Use $Z_\text{in}$ when you want to know what a practical source sees, including pad effects.
